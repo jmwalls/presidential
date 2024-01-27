@@ -86,6 +86,11 @@ def _make_json_name(d: dict) -> str:
 
 
 def inaugural(output_path: Path) -> None:
+    """
+    Scrape inaugural addresses.
+
+    @param output_path: path in which to write speech JSONs.
+    """
     speech_list = _scrape_list_of_speeches(
         "/wiki/Category:U.S._Presidential_Inaugural_Addresses"
     )
@@ -98,6 +103,11 @@ def inaugural(output_path: Path) -> None:
 
 
 def sotu(output_path: Path) -> None:
+    """
+    Scrape inaugural addresses.
+
+    @param output_path: path in which to write speech JSONs.
+    """
     # There's almost certainly a better way to do this with the php query, but
     # we'll just hard code the two pages here.
     speech_list = _scrape_list_of_speeches(
