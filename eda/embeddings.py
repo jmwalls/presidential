@@ -1,6 +1,7 @@
 """Wrap embedding methods."""
 import numpy as np
 import pandas as pd
+from openai import OpenAI
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 
@@ -41,7 +42,7 @@ def tfidf(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 def openai(df: pd.DataFrame) -> pd.DataFrame:
     """
-    XXX
+    Build OpenAI text embeddings per text by paragraph aggreagation.
 
     We'll hit the OpenAI embeddings
     [endpoint](https://platform.openai.com/docs/api-reference/embeddings/create).
@@ -55,4 +56,27 @@ def openai(df: pd.DataFrame) -> pd.DataFrame:
     @param df: paragraph dataframe
     @returns OpenAI embedding paragraph and text dataframe
     """
-    pass
+    client = OpenAI()
+
+    def _get_embedding(g):
+        ret = client.embeddings.create(
+            input=g["paragraph_text"].values.tolist(),
+            model="text-embedding-ada-002",
+        )
+        return pd.DataFrame(g).assign(embedding=[d.embedding for d in ret.data])
+
+    df_para_emb = (
+        df.groupby("text_id")
+        .apply(_get_embedding, include_groups=False)
+        .reset_index(drop=False)
+        .drop(columns=["level_1", "paragraph_text"])
+    )
+
+    df_text_emb = (
+        df_para_emb.groupby("text_id")
+        .apply(_aggregate, include_groups=False)
+        .reset_index(drop=False)
+        .rename(columns={0: "embedding"})
+    )
+
+    return df_para_emb, df_text_emb

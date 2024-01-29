@@ -75,5 +75,20 @@ def write_tfidf_embeddings(input_path: Path):
     df_para_emb.to_parquet(input_path / "tfidf.paragraph.parquet")
 
 
+@app.command()
+def write_openai_embeddings(input_path: Path):
+    assert (
+        input_path / "paragraph.parquet"
+    ).exists(), "Input paragraph dataframe does not exist!"
+
+    console.print(f"building OpenAI embedding table from {input_path}...")
+    df_para = pd.read_parquet(input_path / "paragraph.parquet")
+    df_para_emb, df_text_emb = embeddings.openai(df_para)
+
+    console.print(f"saving para/text tables to {input_path}")
+    df_text_emb.to_parquet(input_path / "openai.text.parquet")
+    df_para_emb.to_parquet(input_path / "openai.paragraph.parquet")
+
+
 if __name__ == "__main__":
     app()
