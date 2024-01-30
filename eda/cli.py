@@ -73,27 +73,9 @@ def write_text_tables(input_path: Path, authors_map: Path, output_path: Path):
 
 
 @app.command()
-def write_tfidf_embeddings(input_path: Path):
-    """
-    Create tfidf embeddings from the dataframe tables contained in INPUT_PATH.
-    Embedding tables are also written to this same dir.
-    """
-    assert (
-        input_path / "paragraph.parquet"
-    ).exists(), "Input paragraph dataframe does not exist!"
-
-    console.print(f"building TF-IdF embedding table from {input_path}...")
-    df_para = pd.read_parquet(input_path / "paragraph.parquet")
-    df_para_emb, df_text_emb = embeddings.tfidf(df_para)
-
-    console.print(f"saving para/text tables to {input_path}")
-    df_text_emb.to_parquet(input_path / "tfidf.text.parquet")
-    df_para_emb.to_parquet(input_path / "tfidf.paragraph.parquet")
-
-
-# TODO: add optional model command.
-@app.command()
-def write_openai_embeddings(input_path: Path):
+def write_embeddings(
+    input_path: Path, model: embeddings.EmbeddingType = typer.Option()
+):
     """
     Create OpenAI embeddings from the dataframe tables contained in INPUT_PATH.
     Embedding tables are also written to this same dir.
@@ -102,13 +84,20 @@ def write_openai_embeddings(input_path: Path):
         input_path / "paragraph.parquet"
     ).exists(), "Input paragraph dataframe does not exist!"
 
-    console.print(f"building OpenAI embedding table from {input_path}...")
+    console.print(f"building {model.value} embedding table from {input_path}...")
     df_para = pd.read_parquet(input_path / "paragraph.parquet")
-    df_para_emb, df_text_emb = embeddings.openai(df_para)
+
+    match model:
+        case embeddings.EmbeddingType.TFIDF:
+            df_para_emb, df_text_emb = embeddings.tfidf(df_para)
+        case embeddings.EmbeddingType.OPENAI_ADA_002:
+            df_para_emb, df_text_emb = embeddings.openai(df_para, model)
+        case embeddings.EmbeddingType.OPENAI_3_SMALL:
+            df_para_emb, df_text_emb = embeddings.openai(df_para, model)
 
     console.print(f"saving para/text tables to {input_path}")
-    df_text_emb.to_parquet(input_path / "openai.text.parquet")
-    df_para_emb.to_parquet(input_path / "openai.paragraph.parquet")
+    df_text_emb.to_parquet(input_path / f"{model.value}.text.parquet")
+    df_para_emb.to_parquet(input_path / f"{model.value}.paragraph.parquet")
 
 
 if __name__ == "__main__":

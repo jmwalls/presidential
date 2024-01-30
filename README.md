@@ -68,9 +68,9 @@ embedding type. To generate processed data run
 
 ```
 $ python cli.py write-text-tables /path/to/addresses /path/to/authors.json /path/to/output/tables
-$ python cli.py write-tfidf-embeddings /path/to/tables
-$ python cli.py write-openai-embeddings /path/to/tables [model-name]
+$ python cli.py write-embeddings /path/to/tables --model [tfidf | openai-ada-002 | openai-3-small]
 ```
 
 Note that to create OpenAI embeddings, the `OPENAI_API_KEY` must be set as an
-environment variable.
+environment variable. To generate OpenAI ada-002 embeddings for this dataset ran
+$0.22.

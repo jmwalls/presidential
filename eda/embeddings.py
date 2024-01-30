@@ -1,8 +1,16 @@
 """Wrap embedding methods."""
+from enum import Enum
+
 import numpy as np
 import pandas as pd
 from openai import OpenAI
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+
+class EmbeddingType(str, Enum):
+    TFIDF = "tfidf"
+    OPENAI_ADA_002 = "openai-ada-002"
+    OPENAI_3_SMALL = "openai-3-small"
 
 
 def _aggregate(df):
@@ -40,7 +48,7 @@ def tfidf(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     return df_para_emb, df_text_emb
 
 
-def openai(df: pd.DataFrame) -> pd.DataFrame:
+def openai(df: pd.DataFrame, model: EmbeddingType) -> pd.DataFrame:
     """
     Build OpenAI text embeddings per text by paragraph aggreagation.
 
@@ -54,14 +62,23 @@ def openai(df: pd.DataFrame) -> pd.DataFrame:
       automatically truncated otherwise).
 
     @param df: paragraph dataframe
+    @param model: embedding model type
     @returns OpenAI embedding paragraph and text dataframe
     """
+    match model:
+        case EmbeddingType.TFIDF:
+            raise ValueError("tfidf is not a valid model type for OpenAI embeddings!")
+        case EmbeddingType.OPENAI_ADA_002:
+            model_str = "text-embedding-ada-002"
+        case EmbeddingType.OPENAI_3_SMALL:
+            model_str = "text-embedding-3-small"
+
     client = OpenAI()
 
     def _get_embedding(g):
         ret = client.embeddings.create(
             input=g["paragraph_text"].values.tolist(),
-            model="text-embedding-ada-002",
+            model=model_str,
         )
         return pd.DataFrame(g).assign(embedding=[d.embedding for d in ret.data])
 
