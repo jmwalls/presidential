@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 
-def authors(path: Path) -> pd.DataFrame:
+def author(path: Path) -> pd.DataFrame:
     """
     Build table mapping author name / author id to author aliases.
 
@@ -28,14 +28,14 @@ def authors(path: Path) -> pd.DataFrame:
     )
 
 
-def text(data_path: Path, authors_map_path: Path) -> pd.DataFrame:
+def text(path: Path, df_authors: pd.DataFrame) -> pd.DataFrame:
     """
     Build text table from directory of speeches.
 
-    @param data_path: directory containing speech JSONs
+    @param path: directory containing speech JSONs
+    @param df_authors: table containing author / author id / author alias
     @returns text dataframe
     """
-    df_authors = authors(authors_map_path)
 
     def _load(p: Path) -> dict:
         with open(p, "r", encoding="utf-8") as f:
@@ -44,7 +44,7 @@ def text(data_path: Path, authors_map_path: Path) -> pd.DataFrame:
 
     # Note: replace below is to clean up documents with fixed line widths.
     return (
-        pd.DataFrame.from_records([_load(p) for p in data_path.glob("*.json")])
+        pd.DataFrame.from_records([_load(p) for p in path.glob("*.json")])
         .sort_values(by="year")
         .reset_index(drop=True)
         .assign(

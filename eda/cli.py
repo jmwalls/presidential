@@ -54,7 +54,7 @@ def view_text(data_path: Path):
 
 
 @app.command()
-def write_text_tables(input_path: Path, authors_map: Path, output_path: Path):
+def write_text_tables(input_path: Path, authors_path: Path, output_path: Path):
     """
     Create dataframe tables from speeches contained and INPUT_PATH and save to
     the OUTPUT_PATH dir.
@@ -64,10 +64,12 @@ def write_text_tables(input_path: Path, authors_map: Path, output_path: Path):
     output_path.mkdir(exist_ok=True)
 
     console.print(f"building tables from {input_path}...")
-    df_text = dataframes.text(input_path, authors_map)
+    df_auth = dataframes.author(authors_path)
+    df_text = dataframes.text(input_path, df_auth)
     df_para = dataframes.paragraph(df_text)
 
     console.print(f"saving tables to {output_path}...")
+    df_auth.to_parquet(output_path / "author.parquet")
     df_text.to_parquet(output_path / "text.parquet")
     df_para.to_parquet(output_path / "paragraph.parquet")
 
