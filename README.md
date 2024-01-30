@@ -59,13 +59,17 @@ addresses directly from wikisource run
 $ python cli.py scrape-speeches /path/to/write/data
 ```
 
+[`data/authors.json`](data/authors.json) provides a mapping between author names
+(presidents) and aliases as represented in the raw data.
+
 In order to process the addresses, we store both the full text and paragraphs as
 a set of dataframes / tables. New tables are created for each different
 embedding type. To generate processed data run
 
 ```
-$ python cli.py write-text-tables /path/to/addresses /path/to/tables
+$ python cli.py write-text-tables /path/to/addresses /path/to/authors.json /path/to/output/tables
 $ python cli.py write-tfidf-embeddings /path/to/tables
+$ python cli.py write-openai-embeddings /path/to/tables [model-name]
 ```
 
 Note that to create OpenAI embeddings, the `OPENAI_API_KEY` must be set as an

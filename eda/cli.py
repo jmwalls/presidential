@@ -1,4 +1,4 @@
-"""CLI tools to scrape data."""
+"""CLI tools to scrape and process data."""
 import json
 import typer
 from pathlib import Path
@@ -12,12 +12,15 @@ import embeddings
 import scrape
 
 
-app = typer.Typer()
+app = typer.Typer(help=__doc__)
 console = Console()
 
 
 @app.command()
 def scrape_speeches(output_path: Path):
+    """
+    Scrape speeches and save to OUTPUT_PATH.
+    """
     console.print("scraping inaugural addresses...")
     out = output_path / "inaugural"
     out.mkdir(exist_ok=False, parents=True)
@@ -31,6 +34,9 @@ def scrape_speeches(output_path: Path):
 
 @app.command()
 def view_text(data_path: Path):
+    """
+    Print speeches contained in DATA_PATH.
+    """
     speech_paths = sorted([p for p in data_path.glob("*.json")])
     for s in speech_paths:
         with open(s, "r", encoding="utf-8") as f:
@@ -48,11 +54,17 @@ def view_text(data_path: Path):
 
 
 @app.command()
-def write_text_tables(input_path: Path, output_path: Path):
+def write_text_tables(input_path: Path, authors_map: Path, output_path: Path):
+    """
+    Create dataframe tables from speeches contained and INPUT_PATH and save to
+    the OUTPUT_PATH dir.
+
+    This function will create the OUTPUT_PATH dir if it does not already exist.
+    """
     output_path.mkdir(exist_ok=True)
 
     console.print(f"building tables from {input_path}...")
-    df_text = dataframes.text(input_path)
+    df_text = dataframes.text(input_path, authors_map)
     df_para = dataframes.paragraph(df_text)
 
     console.print(f"saving tables to {output_path}...")
@@ -62,6 +74,10 @@ def write_text_tables(input_path: Path, output_path: Path):
 
 @app.command()
 def write_tfidf_embeddings(input_path: Path):
+    """
+    Create tfidf embeddings from the dataframe tables contained in INPUT_PATH.
+    Embedding tables are also written to this same dir.
+    """
     assert (
         input_path / "paragraph.parquet"
     ).exists(), "Input paragraph dataframe does not exist!"
@@ -75,8 +91,13 @@ def write_tfidf_embeddings(input_path: Path):
     df_para_emb.to_parquet(input_path / "tfidf.paragraph.parquet")
 
 
+# TODO: add optional model command.
 @app.command()
 def write_openai_embeddings(input_path: Path):
+    """
+    Create OpenAI embeddings from the dataframe tables contained in INPUT_PATH.
+    Embedding tables are also written to this same dir.
+    """
     assert (
         input_path / "paragraph.parquet"
     ).exists(), "Input paragraph dataframe does not exist!"
