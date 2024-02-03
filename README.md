@@ -72,5 +72,5 @@ $ python cli.py write-embeddings /path/to/tables --model [tfidf | openai-ada-002
 ```
 
 Note that to create OpenAI embeddings, the `OPENAI_API_KEY` must be set as an
-environment variable. To generate OpenAI ada-002 embeddings for this dataset ran
-$0.22.
+environment variable. To generate OpenAI ada-002 and 3-small embeddings for this
+dataset (~24k paragraph queries) ran $0.22 and $0.04, respectively.

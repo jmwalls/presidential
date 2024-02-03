@@ -9,36 +9,69 @@
   <body>
     <h1>Visualizing State of the Union Addresses</h1>
 
-    <div class="container-fluid text-center" id="figure"></div>
+    <p class="pt-5">Presidential Similarity</p>
+
+    <div class="container-fluid pb-10">
+      <div class="row align-items-start">
+        <div class="col">
+          <h4>SOTU address</h4>
+          <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button"
+                data-bs-toggle="dropdown" id="similarity-button"></button>
+            <ul class="dropdown-menu" id="similarity-selector-list"
+                style="max-height:300px;overflow-y:scroll;"></ul>
+          </div>
+        </div>
+        <div class="col" style="font-size:85%;">
+          <h4>tf-idf</h4>
+          <ul class="list-group" id="nearest-tfidf"></ul>
+        </div>
+        <div class="col" style="font-size:85%;">
+          <h4>OpenAI ada-002</h4>
+          <ul class="list-group" id="nearest-openai-ada-002"></ul>
+        </div>
+        <div class="col" style="font-size:85%;">
+          <h4>OpenAI 3-small</h4>
+          <ul class="list-group" id="nearest-openai-3-small"></ul>
+        </div>
+      </div>
+    </div>
+
+
+
+    <div class="container-fluid text-center" id="similarity"></div>
+
+    <p class="pt-5">Low-dimensional feature space</p>
+
+    <div class="container-fluid text-center" id="featurespace"></div>
 
     <div class="container-fluid button-toolbar text-center" role="toolbar">
       <div class="btn-group" id="embedding-select" role="group">
         <input type="radio" class="btn-check" name="embradio" id="tfidf" autocomplete="off" checked>
         <label class="btn btn-outline-secondary" for="tfidf">tfidf</label>
-
         <input type="radio" class="btn-check" name="embradio" id="ada002" autocomplete="off">
         <label class="btn btn-outline-secondary" for="ada002">OpenAI ada-002</label>
-
         <input type="radio" class="btn-check" name="embradio" id="3small" autocomplete="off">
         <label class="btn btn-outline-secondary" for="3small">OpenAI 3-small</label>
       </div>
       <div class="btn-group" id="dimension-select" role="group">
         <input type="radio" class="btn-check" name="dimradio" id="pca" autocomplete="off" checked>
         <label class="btn btn-outline-secondary" for="pca">PCA</label>
-
         <input type="radio" class="btn-check" name="dimradio" id="tsne" autocomplete="off">
         <label class="btn btn-outline-secondary" for="tsne">t-SNE</label>
       </div>
       <div class="btn-group" id="color-select" role="group">
         <input type="radio" class="btn-check" name="colradio" id="year" autocomplete="off" checked>
         <label class="btn btn-outline-secondary" for="year">Year</label>
-
         <input type="radio" class="btn-check" name="colradio" id="auth" autocomplete="off">
         <label class="btn btn-outline-secondary" for="auth">Author</label>
       </div>
     </div>
 
-
   </body>
+
+
   <script src="featurespace.js"></script>
+  <script src="similarity.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </html>

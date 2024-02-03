@@ -6,6 +6,10 @@ from rich.console import Console
 from rich.table import Table
 
 import pandas as pd
+import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from sklearn.metrics.pairwise import cosine_distances
 
 import dataframes
 import embeddings
@@ -100,6 +104,103 @@ def write_embeddings(
     console.print(f"saving para/text tables to {input_path}")
     df_text_emb.to_parquet(input_path / f"{model.value}.text.parquet")
     df_para_emb.to_parquet(input_path / f"{model.value}.paragraph.parquet")
+
+
+@app.command()
+def build_post_data(input_path: Path):
+    """
+    Write data artifacts that are used for the viz scripts.
+
+    We're assuming here that input path includes all the embedding types
+    (tf-idf, ada002, 3-small)... This function is a bit of a hodge podge...
+    """
+    dfs_emb = {
+        "tfidf": pd.read_parquet(input_path / "tfidf.text.parquet"),
+        "openai-ada-002": pd.read_parquet(input_path / "openai-ada-002.text.parquet"),
+        "openai-3-small": pd.read_parquet(input_path / "openai-3-small.text.parquet"),
+    }
+
+    df_text = pd.read_parquet(input_path / "text.parquet")
+    df_auth = pd.read_parquet(input_path / "author.parquet")
+
+    df_text_auth = (
+        df_text[["text_id"]]
+        .merge(df_text[["text_id", "author_id", "year"]], how="inner", on="text_id")
+        .merge(
+            df_auth[["author_id", "author"]].drop_duplicates(keep="first"),
+            how="inner",
+            on="author_id",
+        )
+    )
+
+    def _scale(X):
+        x_ptp = X.ptp(axis=0)
+        x_min = X.min(axis=0)
+        return (1.0 / x_ptp.max()) * (X - x_min - 0.5 * x_ptp) + 0.5
+
+    def _dim_reduction(df):
+        X = np.vstack(df["embedding"].values)
+        X_pca = _scale(PCA(n_components=2).fit_transform(X))
+        X_tsne = _scale(TSNE(n_components=2).fit_transform(X))
+        return pd.DataFrame(
+            data={
+                "text_id": df["text_id"],
+                "x_pca": X_pca[:, 0],
+                "y_pca": X_pca[:, 1],
+                "x_tsne": X_tsne[:, 0],
+                "y_tsne": X_tsne[:, 1],
+            }
+        )
+
+    dfs_feat = {k: _dim_reduction(v) for k, v in dfs_emb.items()}
+    (
+        pd.concat(
+            [
+                v.set_index("text_id").add_suffix(f"_{k.replace('-', '_')}")
+                for k, v in dfs_feat.items()
+            ],
+            axis=1,
+        )
+        .reset_index(drop=False)
+        .merge(df_text_auth, how="inner", on="text_id")
+    ).to_csv("presidential_1.csv", index=False)
+
+    def _find_nearest(key, df):
+        X = np.vstack(df["embedding"].values)
+        dist = cosine_distances(X)
+        return (
+            pd.DataFrame(data=dist.tolist(), index=df["text_id"])
+            .reset_index(drop=False)
+            .melt(["text_id"], var_name=f"{key}_text_id", value_name=f"{key}_distance")
+            .sort_values(by=f"{key}_distance")
+            .groupby("text_id")
+            .head(20)
+            .reset_index(drop=True)
+            .sort_values(by=["text_id", f"{key}_distance"])
+            .merge(
+                df_text_auth.add_prefix(f"{key}_"),
+                on=f"{key}_text_id",
+            )
+            .drop(columns=[f"{key}_author_id", f"{key}_text_id"])
+            .set_index("text_id")
+        )
+
+    (
+        pd.concat(
+            [_find_nearest(k, v) for k, v in dfs_emb.items()],
+            axis=1,
+            join="outer",
+        )
+        .reset_index(drop=False)
+        .merge(
+            df_text_auth,
+            on="text_id",
+        )
+        .drop(columns="author_id")
+        .groupby("text_id")
+        .apply(lambda g: g.to_dict("records"), include_groups=False)
+        .to_json("presidential_2.json", indent=2)
+    )
 
 
 if __name__ == "__main__":

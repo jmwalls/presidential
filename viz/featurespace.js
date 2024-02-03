@@ -1,18 +1,21 @@
+{ // limit scope
 const width = 640,
       height = 480,
       margin = 30;
 
 // Create SVG container and a gray background.
-const svg = d3.select("#figure").append("svg")
+const svg = d3.select("#featurespace").append("svg")
     .attr("width", width)
-    .attr("height", height);
+    .attr("height", height)
+    .attr("viewBox", [0, 0, width, height])
+    .attr("style", "max-width: 100%; height: auto;");
 
 svg.append("g")
     .append("rect")
     .attr("class", "background")
+    .attr("fill", "rgb(245,245,245)")
     .attr("width", width)
-    .attr("height", height)
-    .attr("fill", "rgb(245,245,245)");
+    .attr("height", height);
 
 // Create the horizontal (x) / vertical (y) scales--we've prescaled the features
 // to live 0-1.
@@ -83,7 +86,7 @@ function tooltipMouseMove(e) {
 }
 
 // Plot the data...
-d3.csv("placeholder.csv").then(function(data) {
+d3.csv("presidential_1.csv").then(function(data) {
     // Get colors for all years.
     years = data.map(d => d["year"]);
     const coloryear = d3.scaleSequential(
@@ -153,3 +156,4 @@ d3.csv("placeholder.csv").then(function(data) {
     d3.select("#dimension-select").on("change", () => drawEmbeddings());
     d3.select("#color-select").on("change", () => drawEmbeddings());
 });
+}
