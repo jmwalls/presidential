@@ -37,13 +37,22 @@ def scrape_speeches(output_path: Path):
 
 
 @app.command()
-def view_text(data_path: Path):
+def view_text(
+    data_path: Path,
+    index: int = typer.Option(0, help="beginning speech index"),
+):
     """
     Print speeches contained in DATA_PATH.
     """
     speech_paths = sorted([p for p in data_path.glob("*.json")])
-    for s in speech_paths:
-        with open(s, "r", encoding="utf-8") as f:
+    while True:
+        if index < 0:
+            index = len(speech_paths) - 1
+        index = index % len(speech_paths)
+
+        speech = speech_paths[index]
+
+        with open(speech, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         t = Table()
@@ -55,6 +64,10 @@ def view_text(data_path: Path):
         console.print(f"you entered {key}")
         if key == "q":
             break
+        elif key == "n":
+            index += 1
+        elif key == "p":
+            index -= 1
 
 
 @app.command()

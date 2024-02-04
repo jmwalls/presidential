@@ -10,7 +10,7 @@ Project layout:
 
 * [eda/]("eda/") includes Python code used to scrape the raw data, generate
   embeddings, and evaluate simularity.
-* [visualization/]() contains front-end javascript to present the results.
+* [visualization/](viz/) contains front-end javascript to present the results.
 
 ### Vector embeddings
 
@@ -41,14 +41,6 @@ We can also aggregate the embeddings across paragraphs to determine a single
 document embedding (try weighted average?). With a full-document embedding, we
 can look for similarities and differences between elements of the corpus.
 
-
-* Pairwise cosine similarity matrix
-    * Sort temporally
-    * Sort based on hierarchical clusters
-* For a query speech, return
-    * k-nearest
-    * k-farthest
-
 ### Run this code...
 
 The scraped "raw" addresses are stored [in this repo](data/raw/). They have been
@@ -69,8 +61,38 @@ embedding type. To generate processed data run
 ```
 $ python cli.py write-text-tables /path/to/addresses /path/to/authors.json /path/to/output/tables
 $ python cli.py write-embeddings /path/to/tables --model [tfidf | openai-ada-002 | openai-3-small]
+$ python cli.py build-post-data /path/to/tables
 ```
 
 Note that to create OpenAI embeddings, the `OPENAI_API_KEY` must be set as an
 environment variable. To generate OpenAI ada-002 and 3-small embeddings for this
 dataset (~24k paragraph queries) ran $0.22 and $0.04, respectively.
+
+The final command builds csv/json data files that can visualized with the
+scripts here. (Visualization data artifacts are also already contained in the
+`viz/` dir). To view, simply start a local server, e.g., `python -m http.server`
+and point your browser to the viz dir.
+
+### pgvector
+
+For giggles, we'll also include some code to push the addresses and embeddings
+to a PostgreSQL database outfitted with the
+[pgvector](https://github.com/pgvector/pgvector) extension.
+
+To run:
+
+```
+$ docker run --name testdb -i -p 5432:5432 -e POSTGRES_PASSWORD=postgres pgvector/pgvector:pg16
+$ docker run -i -p 5050:80 -e PGADMIN_DEFAULT_EMAIL="foo@foo.com" -e PGADMIN_DEFAULT_PASSWORD="admin" dpage/pgadmin4
+```
+
+```
+SELECT * from paragraph
+INNER JOIN
+(
+	SELECT paragraph_id FROM paragraph_embedding WHERE embedding_type='tfidf'
+	ORDER BY embedding <=> (SELECT embedding FROM paragraph_embedding WHERE paragraph_id = 23103 and embedding_type='tfidf')
+	LIMIT 10
+)
+ON paragraph.id=paragraph_id
+```
